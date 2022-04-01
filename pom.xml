@@ -13,7 +13,7 @@
     <artifactId>kafka-schema-registry-parent</artifactId>
     <packaging>pom</packaging>
     <name>kafka-schema-registry-parent</name>
-    <version>6.2.1-mq.0</version>
+    <version>6.2.1</version>
     <organization>
         <name>Confluent, Inc.</name>
         <url>http://confluent.io</url>
@@ -96,30 +96,7 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
-        <repository>
-            <id>marqeta-mvn-release-repo</id>
-            <name>Marqeta Maven Release Repository</name>
-            <url>https://nexus3.marqeta.com/repository/Releases</url>
-        </repository>
-        <repository>
-            <id>marqeta-mvn-snapshot-repo</id>
-            <name>Marqeta Maven Snapshot Repository</name>
-            <url>https://nexus3.marqeta.com/repository/Snapshots/</url>
-        </repository>
     </repositories>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>nexus</id>
-            <name>Marqeta Maven Snapshot Repository</name>
-            <url>https://nexus3.marqeta.com/repository/Snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>nexus</id>
-            <name>Marqeta Maven Release Repository</name>
-            <url>https://nexus3.marqeta.com/repository/Releases/</url>
-        </repository>
-    </distributionManagement>
 
     <dependencyManagement>
         <dependencies>
