@@ -360,10 +360,9 @@ public class JsonSchemaData {
     });
   }
 
-  private JsonSchemaDataConfig config;
-  private Map<Schema, org.everit.json.schema.Schema> fromConnectSchemaCache;
-  private Map<JsonSchema, Schema> toConnectSchemaCache;
-  private Map<String, JsonSchema> jsonSchemaCache;
+  private final JsonSchemaDataConfig config;
+  private final Map<Schema, JsonSchema> fromConnectSchemaCache;
+  private final Map<JsonSchema, Schema> toConnectSchemaCache;
 
   public JsonSchemaData() {
     this(new JsonSchemaDataConfig.Builder().with(
@@ -376,7 +375,6 @@ public class JsonSchemaData {
     this.config = jsonSchemaDataConfig;
     fromConnectSchemaCache = new BoundedConcurrentHashMap<>(jsonSchemaDataConfig.schemaCacheSize());
     toConnectSchemaCache = new BoundedConcurrentHashMap<>(jsonSchemaDataConfig.schemaCacheSize());
-    jsonSchemaCache = new BoundedConcurrentHashMap<>(jsonSchemaDataConfig.schemaCacheSize());
   }
 
   /**
@@ -603,32 +601,22 @@ public class JsonSchemaData {
   }
 
   public JsonSchema fromConnectSchema(Schema schema) {
-    FromConnectContext ctx = new FromConnectContext();
     if (schema == null) {
-      return new JsonSchema(rawSchemaFromConnectSchema(ctx, null));
+      return null;
     }
-    // using the name as the cache key, example:cdc_marqeta_jcard_trancache.Envelope
-    JsonSchema cachedJsonSchema = jsonSchemaCache.get(schema.name());
-    if (cachedJsonSchema != null) {
-      return cachedJsonSchema;
+    JsonSchema cachedSchema = fromConnectSchemaCache.get(schema);
+    if (cachedSchema != null) {
+      return cachedSchema;
     }
-    JsonSchema resultJsonSchema = new JsonSchema(rawSchemaFromConnectSchema(ctx, schema));
-    jsonSchemaCache.put(schema.name(), resultJsonSchema);
-    return resultJsonSchema;
+    FromConnectContext ctx = new FromConnectContext();
+    JsonSchema resultSchema = new JsonSchema(rawSchemaFromConnectSchema(ctx, schema));
+    fromConnectSchemaCache.put(schema, resultSchema);
+    return resultSchema;
   }
 
   private org.everit.json.schema.Schema rawSchemaFromConnectSchema(
       FromConnectContext ctx, Schema schema) {
-    if (schema == null) {
-      return null;
-    }
-    org.everit.json.schema.Schema cachedSchema = fromConnectSchemaCache.get(schema);
-    if (cachedSchema != null) {
-      return cachedSchema;
-    }
-    org.everit.json.schema.Schema resultSchema = rawSchemaFromConnectSchema(ctx, schema, null);
-    fromConnectSchemaCache.put(schema, resultSchema);
-    return resultSchema;
+    return rawSchemaFromConnectSchema(ctx, schema, null);
   }
 
   private org.everit.json.schema.Schema rawSchemaFromConnectSchema(
@@ -751,7 +739,7 @@ public class JsonSchemaData {
               refId = fieldSchema.parameters().get(JSON_ID_PROP);
             }
             org.everit.json.schema.Schema jsonSchema;
-            if (refId != null && ctx.contains(refId)) {
+            if (ctx.contains(refId)) {
               jsonSchema = ReferenceSchema.builder().refValue(refId).build();
             } else {
               jsonSchema = rawSchemaFromConnectSchema(ctx, fieldSchema, field.index());
@@ -946,7 +934,7 @@ public class JsonSchemaData {
     } else if (jsonSchema instanceof CombinedSchema) {
       CombinedSchema combinedSchema = (CombinedSchema) jsonSchema;
       CombinedSchema.ValidationCriterion criterion = combinedSchema.getCriterion();
-      String name = null;
+      String name;
       if (criterion == CombinedSchema.ONE_CRITERION || criterion == CombinedSchema.ANY_CRITERION) {
         name = JSON_TYPE_ONE_OF;
       } else if (criterion == CombinedSchema.ALL_CRITERION) {
@@ -1361,7 +1349,7 @@ public class JsonSchemaData {
     }
 
     public boolean contains(String id) {
-      return id != null ? ids.contains(id) : false;
+      return id != null && ids.contains(id);
     }
 
     public void add(String id) {
